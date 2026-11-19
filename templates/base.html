@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GRC Dashboard{% endblock %} | ISO 27001:2022</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root { --primary: #1a3a5c; --primary-light: #2d5986; --sidebar-width: 240px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        .sidebar { width: var(--sidebar-width); min-height: 100vh; background: var(--primary); position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { background: rgba(0,0,0,0.2); padding: 18px 20px; color: white; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-brand small { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.7; margin-top: 2px; }
+        .sidebar .nav-link { color: rgba(255,255,255,0.75); padding: 12px 20px; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background: rgba(255,255,255,0.12); border-left: 3px solid #4fc3f7; }
+        .sidebar .nav-link i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: var(--sidebar-width); }
+        .topbar { background: white; border-bottom: 1px solid #dee2e6; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 99; }
+        .topbar h1 { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin: 0; }
+        .page-body { padding: 24px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .card-header { background: white; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
+        .stat-card { border-radius: 12px; padding: 20px; color: white; }
+        .stat-card .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+        .stat-card .stat-label { font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }
+        .stat-card .stat-icon { font-size: 2rem; opacity: 0.3; }
+        .badge-critical { background: #6f1d1b; color: white; }
+        .badge-high { background: #7d3c00; color: white; }
+        .badge-medium { background: #7d6608; color: white; }
+        .badge-low { background: #1d6348; color: white; }
+        .table th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
+        .sidebar-section { padding: 8px 20px 4px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="sidebar-brand"><i class="bi bi-shield-lock-fill me-2"></i> GRC Dashboard<small>ISO 27001:2022 Compliance</small></div>
+    <nav class="mt-2">
+        <div class="sidebar-section">Overview</div>
+        <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <div class="sidebar-section">Risk</div>
+        <a href="{{ url_for('risks.list_risks') }}" class="nav-link {% if 'risks' in request.endpoint %}active{% endif %}"><i class="bi bi-exclamation-triangle"></i> Risk Register</a>
+        <div class="sidebar-section">Compliance</div>
+        <a href="{{ url_for('compliance.list_controls') }}" class="nav-link {% if request.endpoint == 'compliance.list_controls' %}active{% endif %}"><i class="bi bi-clipboard-check"></i> ISO 27001:2022 Controls</a>
+        <a href="{{ url_for('compliance.gap_analysis') }}" class="nav-link {% if request.endpoint == 'compliance.gap_analysis' %}active{% endif %}"><i class="bi bi-bar-chart-gaps"></i> Gap Analysis</a>
+        <div class="sidebar-section">Reporting</div>
+        <a href="{{ url_for('reports.reports') }}" class="nav-link {% if request.endpoint == 'reports.reports' %}active{% endif %}"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a>
+        <a href="{{ url_for('reports.generate_pdf') }}" class="nav-link"><i class="bi bi-file-pdf"></i> Export PDF</a>
+    </nav>
+</div>
+<div class="main-content">
+    <div class="topbar">
+        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-success">ISO 27001:2022</span>
+            <span class="text-muted" style="font-size:0.85rem;"><i class="bi bi-person-circle me-1"></i> Khooshi Joshi</span>
+        </div>
+    </div>
+    <div class="page-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for cat, msg in messages %}
+                <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            {% endfor %}{% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

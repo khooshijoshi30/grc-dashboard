@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Gap Analysis{% endblock %}
+{% block page_title %}ISO 27001:2022 Gap Analysis{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card text-center p-4">
+      <div style="font-size:3.5rem;font-weight:800;color:{{ '#28a745' if score >= 70 else '#ffc107' if score >= 40 else '#dc3545' }};">{{ score }}%</div>
+      <div class="text-muted">Overall Compliance Score</div>
+      <span class="badge bg-{{ 'success' if score >= 70 else 'warning' if score >= 40 else 'danger' }} fs-6 mt-2">{{ 'Good' if score >= 70 else 'Needs Improvement' if score >= 40 else 'Critical Gaps' }}</span>
+    </div>
+  </div>
+  <div class="col-md-8"><div class="card h-100"><div class="card-header py-3">Theme-wise Compliance</div><div class="card-body"><canvas id="gapChart" height="160"></canvas></div></div></div>
+</div>
+<div class="card mb-4"><div class="card-header py-3"><i class="bi bi-bar-chart-steps me-2"></i> Theme Breakdown</div>
+  <div class="card-body p-0"><table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th class="ps-3">Theme</th><th>Total</th><th>Implemented</th><th>Partial</th><th>Not Impl.</th><th>Score</th></tr></thead>
+    <tbody>
+    {% for domain, stats in domain_stats.items() %}
+    {% set dscore = (stats.implemented / stats.total * 100)|int %}
+    <tr>
+      <td class="ps-3 fw-semibold">{{ domain }}</td>
+      <td>{{ stats.total }}</td>
+      <td><span class="text-success fw-bold">{{ stats.implemented }}</span></td>
+      <td><span class="text-warning fw-bold">{{ stats.partial }}</span></td>
+      <td><span class="text-danger fw-bold">{{ stats.not_implemented }}</span></td>
+      <td><div class="d-flex align-items-center gap-2"><div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar bg-{{ 'success' if dscore >= 70 else 'warning' if dscore >= 40 else 'danger' }}" style="width:{{ dscore }}%;"></div></div><small class="fw-bold">{{ dscore }}%</small></div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% if not_impl %}
+<div class="card mb-4"><div class="card-header py-3 text-danger"><i class="bi bi-x-circle me-2"></i> Not Implemented ({{ not_impl|length }})</div>
+  <div class="card-body p-0"><table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th class="ps-3">Control ID</th><th>Theme</th><th>Control Name</th><th>Action</th></tr></thead>
+    <tbody>{% for c in not_impl %}<tr><td class="ps-3"><code>{{ c.control_id }}</code></td><td>{{ c.domain }}</td><td>{{ c.control_name }}</td><td><a href="{{ url_for('compliance.list_controls') }}" class="btn btn-sm btn-outline-danger">Remediate</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+new Chart(document.getElementById('gapChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ domain_stats.keys()|list|tojson }},
+    datasets: [
+      { label: 'Implemented', data: {{ domain_stats.values()|map(attribute='implemented')|list|tojson }}, backgroundColor: '#28a745', borderRadius: 4 },
+      { label: 'Partial', data: {{ domain_stats.values()|map(attribute='partial')|list|tojson }}, backgroundColor: '#ffc107', borderRadius: 4 },
+      { label: 'Not Implemented', data: {{ domain_stats.values()|map(attribute='not_implemented')|list|tojson }}, backgroundColor: '#dc3545', borderRadius: 4 },
+    ]
+  },
+  options: { responsive: true, indexAxis: 'y', plugins: { legend: { position: 'top' } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { font: { size: 10 } } } } }
+});
+</script>
+{% endblock %}

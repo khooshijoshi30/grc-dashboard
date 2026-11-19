@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Risk Register{% endblock %}
+{% block page_title %}Risk Register{% endblock %}
+{% block content %}
+<div class="card mb-3"><div class="card-body py-2">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-auto"><select name="status" class="form-select form-select-sm"><option value="">All Statuses</option>{% for s in ['Open','Mitigating','Closed'] %}<option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+    <div class="col-auto"><select name="category" class="form-select form-select-sm"><option value="">All Categories</option>{% for c in categories %}<option value="{{ c }}" {% if category_filter==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+    <div class="col-auto"><button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button> <a href="{{ url_for('risks.list_risks') }}" class="btn btn-sm btn-outline-secondary">Clear</a></div>
+    <div class="col text-end"><a href="{{ url_for('risks.add_risk') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Risk</a></div>
+  </form>
+</div></div>
+<div class="card"><div class="card-body p-0">
+{% if risks %}
+<table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr><th class="ps-3">#</th><th>Title</th><th>Category</th><th>L</th><th>I</th><th>Score</th><th>Level</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for risk in risks %}
+  <tr>
+    <td class="ps-3 text-muted">{{ risk.id }}</td>
+    <td><strong>{{ risk.title }}</strong>{% if risk.description %}<div class="text-muted" style="font-size:0.78rem;">{{ risk.description[:60] }}...</div>{% endif %}</td>
+    <td><span class="badge bg-light text-dark border">{{ risk.category }}</span></td>
+    <td>{{ risk.likelihood }}/5</td><td>{{ risk.impact }}/5</td>
+    <td><strong>{{ risk.risk_score }}</strong><span class="text-muted">/25</span></td>
+    <td><span class="badge badge-{{ risk.risk_level()|lower }}">{{ risk.risk_level() }}</span></td>
+    <td><span class="badge bg-{{ 'success' if risk.status=='Closed' else 'warning' if risk.status=='Mitigating' else 'danger' }}">{{ risk.status }}</span></td>
+    <td class="text-muted" style="font-size:0.85rem;">{{ risk.owner or '-' }}</td>
+    <td>
+      <a href="{{ url_for('risks.edit_risk', id=risk.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+      <form method="post" action="{{ url_for('risks.delete_risk', id=risk.id) }}" class="d-inline" onsubmit="return confirm('Delete this risk?')">
+        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="text-center py-5 text-muted"><i class="bi bi-shield-check" style="font-size:3rem;opacity:0.3;"></i><p class="mt-3">No risks found. <a href="{{ url_for('risks.add_risk') }}">Add your first risk</a></p></div>
+{% endif %}
+</div></div>
+{% endblock %}

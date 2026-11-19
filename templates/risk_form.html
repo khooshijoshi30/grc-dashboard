@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Risk{% endblock %}
+{% block page_title %}{{ action }} Risk{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-3"><i class="bi bi-exclamation-triangle me-2"></i> {{ action }} Risk Entry</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3"><label class="form-label fw-semibold">Risk Title *</label>
+            <input type="text" name="title" class="form-control" value="{{ risk.title if risk else '' }}" required placeholder="e.g. Unauthorized access to customer data"></div>
+          <div class="mb-3"><label class="form-label fw-semibold">Description</label>
+            <textarea name="description" class="form-control" rows="3">{{ risk.description if risk else '' }}</textarea></div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Category *</label>
+              <select name="category" class="form-select" required>
+                {% for c in categories %}<option value="{{ c }}" {% if risk and risk.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+              </select></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Status</label>
+              <select name="status" class="form-select">
+                {% for s in ['Open','Mitigating','Closed'] %}<option value="{{ s }}" {% if risk and risk.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+              </select></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Likelihood (1-5) *</label>
+              <select name="likelihood" class="form-select" id="likelihood" required>
+                {% for i in range(1,6) %}<option value="{{ i }}" {% if risk and risk.likelihood == i %}selected{% endif %}>{{ i }} - {{ ['Rare','Unlikely','Possible','Likely','Almost Certain'][i-1] }}</option>{% endfor %}
+              </select></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Impact (1-5) *</label>
+              <select name="impact" class="form-select" id="impact" required>
+                {% for i in range(1,6) %}<option value="{{ i }}" {% if risk and risk.impact == i %}selected{% endif %}>{{ i }} - {{ ['Negligible','Minor','Moderate','Major','Catastrophic'][i-1] }}</option>{% endfor %}
+              </select></div>
+          </div>
+          <div class="alert alert-secondary mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>Calculated Risk Score:</span>
+              <span id="scoreValue" style="font-size:1.5rem;font-weight:700;"></span>
+              <span id="levelBadge" class="badge fs-6"></span>
+            </div>
+          </div>
+          <div class="mb-3"><label class="form-label fw-semibold">Risk Owner</label>
+            <input type="text" name="owner" class="form-control" value="{{ risk.owner if risk else '' }}" placeholder="e.g. IT Security Team"></div>
+          <div class="mb-3"><label class="form-label fw-semibold">Mitigation Plan</label>
+            <textarea name="mitigation" class="form-control" rows="3">{{ risk.mitigation if risk else '' }}</textarea></div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Risk</button>
+            <a href="{{ url_for('risks.list_risks') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function updateScore() {
+  const l = parseInt(document.getElementById('likelihood').value);
+  const i = parseInt(document.getElementById('impact').value);
+  const score = l * i;
+  document.getElementById('scoreValue').textContent = score + '/25';
+  const badge = document.getElementById('levelBadge');
+  badge.textContent = score <= 4 ? 'Low' : score <= 9 ? 'Medium' : score <= 16 ? 'High' : 'Critical';
+  badge.className = 'badge fs-6 bg-' + (score <= 4 ? 'success' : score <= 9 ? 'warning' : score <= 16 ? 'danger' : 'dark');
+}
+document.getElementById('likelihood').addEventListener('change', updateScore);
+document.getElementById('impact').addEventListener('change', updateScore);
+updateScore();
+</script>
+{% endblock %}

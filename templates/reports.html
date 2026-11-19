@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Export{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-bar-graph me-2"></i> GRC Report Summary</span>
+        <a href="{{ url_for('reports.generate_pdf') }}" class="btn btn-danger btn-sm"><i class="bi bi-file-pdf me-1"></i> Export PDF</a>
+      </div>
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Generated: {{ now.strftime('%d %B %Y, %H:%M') }}</h6>
+        <h6 class="fw-bold mb-2">Risk Summary</h6>
+        <table class="table table-sm table-bordered mb-4">
+          <thead class="table-dark"><tr><th>Risk Level</th><th>Count</th></tr></thead>
+          <tbody>
+            {% set levels = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0} %}
+            {% for r in risks %}{% set _ = levels.update({r.risk_level(): levels[r.risk_level()] + 1}) %}{% endfor %}
+            {% for level, count in levels.items() %}<tr><td><span class="badge badge-{{ level|lower }}">{{ level }}</span></td><td>{{ count }}</td></tr>{% endfor %}
+            <tr class="table-secondary"><td><strong>Total</strong></td><td><strong>{{ risks|length }}</strong></td></tr>
+          </tbody>
+        </table>
+        <h6 class="fw-bold mb-2">Compliance Summary</h6>
+        <table class="table table-sm table-bordered">
+          <thead class="table-dark"><tr><th>Status</th><th>Controls</th><th>%</th></tr></thead>
+          <tbody>
+            {% set impl = controls|selectattr('status','eq','Implemented')|list|length %}
+            {% set part = controls|selectattr('status','eq','Partial')|list|length %}
+            {% set not_i = controls|selectattr('status','eq','Not Implemented')|list|length %}
+            {% set total = controls|length %}
+            <tr><td><span class="badge bg-success">Implemented</span></td><td>{{ impl }}</td><td>{{ (impl/total*100)|round(1) }}%</td></tr>
+            <tr><td><span class="badge bg-warning">Partial</span></td><td>{{ part }}</td><td>{{ (part/total*100)|round(1) }}%</td></tr>
+            <tr><td><span class="badge bg-danger">Not Implemented</span></td><td>{{ not_i }}</td><td>{{ (not_i/total*100)|round(1) }}%</td></tr>
+            <tr class="table-secondary"><td><strong>Total</strong></td><td><strong>{{ total }}</strong></td><td><strong>{{ compliance_score }}%</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3"><div class="card-header py-3">Quick Export</div>
+      <div class="card-body">
+        <a href="{{ url_for('reports.generate_pdf') }}" class="btn btn-danger w-100 mb-2"><i class="bi bi-file-pdf me-2"></i> Download PDF Report</a>
+        <div class="mt-3 p-3 rounded" style="background:#f8f9fa;font-size:0.82rem;"><strong>Includes:</strong><ul class="mt-1 mb-0 ps-3"><li>Executive Summary</li><li>Risk Register</li><li>Gap Analysis</li><li>Compliance Score</li></ul></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header py-3">Compliance Score</div>
+      <div class="card-body text-center">
+        <div style="font-size:3rem;font-weight:800;color:{{ '#28a745' if compliance_score >= 70 else '#ffc107' if compliance_score >= 40 else '#dc3545' }};">{{ compliance_score }}%</div>
+        <div class="text-muted">ISO 27001:2022</div>
+        <div class="progress mt-3" style="height:10px;"><div class="progress-bar bg-{{ 'success' if compliance_score >= 70 else 'warning' if compliance_score >= 40 else 'danger' }}" style="width:{{ compliance_score }}%;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
